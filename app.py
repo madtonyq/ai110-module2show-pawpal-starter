@@ -1,88 +1,42 @@
-import streamlit as st
+# AI Interactions Log
 
-st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
+> **Stretch features only.** Only fill in the sections that apply to stretch features you attempted. If you did not attempt a stretch feature, leave its section blank or delete it. This file is not required for the core project.
 
-st.title("🐾 PawPal+")
+---
 
-st.markdown(
-    """
-Welcome to the PawPal+ starter app.
+## Agent Workflow (SF7)
 
-This file is intentionally thin. It gives you a working Streamlit app so you can start quickly,
-but **it does not implement the project logic**. Your job is to design the system and build it.
+> Document your experience using an AI agent (e.g., Cursor Agent, Claude, Copilot) to make multi-step changes autonomously.
 
-Use this app as your interactive demo once your backend classes/functions exist.
-"""
-)
+**What task did you give the agent?**
+I gave the ai the task of giving me the uml design their version and I added it to mines how I see fit 
+then I ask it to help me implement the code and I added how I see fit 
+<!-- Describe the goal you asked the agent to accomplish -->
 
-with st.expander("Scenario", expanded=True):
-    st.markdown(
-        """
-**PawPal+** is a pet care planning assistant. It helps a pet owner plan care tasks
-for their pet(s) based on constraints like time, priority, and preferences.
+**What did the agent do?**
 
-You will design and implement the scheduling logic and connect it to this Streamlit UI.
-"""
-    )
+<!-- List the steps the agent took (files edited, commands run, etc.) -->
 
-with st.expander("What you need to build", expanded=True):
-    st.markdown(
-        """
-At minimum, your system should:
-- Represent pet care tasks (what needs to happen, how long it takes, priority)
-- Represent the pet and the owner (basic info and preferences)
-- Build a plan/schedule for a day that chooses and orders tasks based on constraints
-- Explain the plan (why each task was chosen and when it happens)
-"""
-    )
+the agent helped me write the code 
+**What did you have to verify or fix manually?**
+I had to verify that the code was able to pass the test and check the code if there was any syntax errors or logical errors
+<!-- Describe anything the agent got wrong or that required human review -->
 
-st.divider()
+---
 
-st.subheader("Quick Demo Inputs (UI only)")
-owner_name = st.text_input("Owner name", value="Jordan")
-pet_name = st.text_input("Pet name", value="Mochi")
-species = st.selectbox("Species", ["dog", "cat", "other"])
+## Prompt Comparison (SF11)
 
-st.markdown("### Tasks")
-st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
+> Compare two different prompts (or two different models) on the same task.
 
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
+| | Option A | Option B |
+|-|----------|----------|
+| **Model / tool used** | | |
+| **Prompt** | | |
+| **Response summary** | | |
+| **What was useful** | | |
+| **Problems noticed** | | |
+| **Decision** | | |
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    task_title = st.text_input("Task title", value="Morning walk")
-with col2:
-    duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
-with col3:
-    priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
+**Which approach did you use in your final implementation and why?**
 
-if st.button("Add task"):
-    st.session_state.tasks.append(
-        {"title": task_title, "duration_minutes": int(duration), "priority": priority}
-    )
-
-if st.session_state.tasks:
-    st.write("Current tasks:")
-    st.table(st.session_state.tasks)
-else:
-    st.info("No tasks yet. Add one above.")
-
-st.divider()
-
-st.subheader("Build Schedule")
-st.caption("This button should call your scheduling logic once you implement it.")
-
-if st.button("Generate schedule"):
-    st.warning(
-        "Not implemented yet. Next step: create your scheduling logic (classes/functions) and call it here."
-    )
-    st.markdown(
-        """
-Suggested approach:
-1. Design your UML (draft).
-2. Create class stubs (no logic).
-3. Implement scheduling behavior.
-4. Connect your scheduler here and display results.
-"""
-    )
+<!-- Your conclusion -->
