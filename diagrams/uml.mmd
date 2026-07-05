@@ -1,15 +1,152 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
-
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Owner {
+        -name_: str
+        -daily_time_limit_minutes_: int
+        -preferences_: Dict[str, Any]
+        +__init__(name: str, daily_time_limit_minutes: int = 120)
+        +get_name() str
+        +get_time_limit() int
+        +set_time_limit(new_limit: int) void
+        +set_preference(key: str, value: Any) void
+        +get_preference(key: str, default: Any = None) Optional[Any]
+        +get_all_preferences() Dict[str, Any]
+        +__repr__() str
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Pet {
+        -id_: int
+        -name_: str
+        -species_: str
+        -breed_: str
+        -age_: int
+        -weight_: float
+        -medical_conditions_: List[str]
+        +__init__(name: str, species: str, breed: str = "", age: int = 0, weight: float = 0.0, medical_conditions: Optional[List[str]] = None)
+        +get_name() str
+        +get_species() str
+        +get_breed() str
+        +get_age() int
+        +get_weight() float
+        +get_medical_conditions() List[str]
+        +has_medical_condition(condition: str) bool
+        +has_medical_conditions() bool
+        +add_medical_condition(condition: str) void
+        +remove_medical_condition(condition: str) void
+        +set_name(name: str) void
+        +set_species(species: str) void
+        +set_breed(breed: str) void
+        +set_age(age: int) void
+        +set_weight(weight: float) void
+        +__repr__() str
     }
 
-    ClassName --> AnotherClass : relationship
+    class Priority {
+        <<enumeration>>
+        LOW = 1
+        MEDIUM = 2
+        HIGH = 3
+        CRITICAL = 4
+    }
+
+    class Task {
+        -id_: int
+        -description_: str
+        -duration_minutes_: int
+        -priority_: int
+        -category_: str
+        -preferred_time_: Optional[str]
+        -is_recurring_: bool
+        -recurring_pattern_: Optional[str]
+        -recurring_days_: List[str]
+        +__init__(description: str, duration_minutes: int, priority: int = Priority.MEDIUM, category: str = "other", preferred_time: Optional[str] = None, is_recurring: bool = False, recurring_pattern: Optional[str] = None, recurring_days: Optional[List[str]] = None)
+        +get_id() int
+        +get_description() str
+        +get_duration() int
+        +get_duration_minutes() int
+        +get_priority() int
+        +get_category() str
+        +get_preferred_time() Optional[str]
+        +get_is_recurring() bool
+        +get_recurring_pattern() Optional[str]
+        +get_recurring_days() List[str]
+        +get_priority_label() str
+        +is_high_priority() bool
+        +is_critical() bool
+        +set_description(description: str) void
+        +set_duration_minutes(duration_minutes: int) void
+        +set_priority(priority: int) void
+        +set_category(category: str) void
+        +set_preferred_time(preferred_time: Optional[str]) void
+        +set_recurring(is_recurring: bool, recurring_pattern: Optional[str] = None, recurring_days: Optional[List[str]] = None) void
+        +occurs_on(date_str: str) bool
+        +__repr__() str
+        -_validate_priority(priority: int) int
+        -_validate_recurrence() void
+    }
+
+    class PlannedTask {
+        -task_: Task
+        -start_time_: int
+        -end_time_: int
+        -reason_: str
+        +__init__(task: Task, start_minutes: int, reason: str = "")
+        +get_task() Task
+        +get_start_time() int
+        +get_end_time() int
+        +get_reason() str
+        +set_reason(reason: str) void
+        +get_start_time_str() str
+        +get_end_time_str() str
+        +overlaps_with(other: PlannedTask) bool
+        +__repr__() str
+    }
+
+    class DailyPlan {
+        -date_: str
+        -pet_name_: str
+        -owner_name_: str
+        -planned_tasks_: List[PlannedTask]
+        -excluded_tasks_: List[Tuple[Task, str]]
+        -total_planned_minutes_: int
+        -available_minutes_: int
+        -summary_: str
+        +__init__(pet_name: str, owner_name: str, available_minutes: int)
+        +set_date(date: str) void
+        +add_planned_task(planned_task: PlannedTask) void
+        +add_excluded_task(task: Task, reason: str) void
+        +get_scheduled_tasks() List[PlannedTask]
+        +get_excluded_tasks() List[Tuple[Task, str]]
+        +get_total_planned_minutes() int
+        +get_total_available_minutes() int
+        +get_remaining_minutes() int
+        +get_summary() str
+        +generate_summary() str
+        +get_formatted_plan() List[str]
+        +__repr__() str
+    }
+
+    class Scheduler {
+        -owner_: Owner
+        -pet_: Pet
+        -tasks_: List[Task]
+        -working_hours_: Tuple[int, int]
+        +__init__(owner: Owner, pet: Pet, tasks: List[Task], working_hours: Tuple[int, int] = (360, 1320))
+        +generate_daily_plan(date: str = None) DailyPlan
+        +filter_tasks_by_recurrence(tasks: List[Task], date: str) List[Task]
+        +sort_tasks(tasks: List[Task]) List[Task]
+        +schedule_with_conflicts_handling(sorted_tasks: List[Task], time_limit: int, working_hours: Tuple[int, int]) Tuple[List[PlannedTask], List[Tuple[Task, str]]]
+        +find_earliest_available_time(task: Task, scheduled: List[PlannedTask], day_start: int, day_end: int) Optional[int]
+        +explain_scheduling_decision(task: Task, start_time: int, scheduled: List[PlannedTask]) str
+        +calculate_priority_score(task: Task) float
+        +get_available_time_slots(date: str = None) List[Tuple[int, int]]
+        +get_statistics(date: str = None) Dict[str, Any]
+        +__repr__() str
+    }
+
+    Scheduler --> Owner : uses
+    Scheduler --> Pet : uses
+    Scheduler --> Task : schedules
+    Scheduler ..> DailyPlan : creates
+    DailyPlan o-- PlannedTask : contains
+    PlannedTask --> Task : wraps
+    Task --> Priority : uses
