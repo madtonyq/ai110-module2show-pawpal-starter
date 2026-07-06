@@ -54,6 +54,12 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 #   ...
 ```
 
+# Daily plan for Mochi (Golden Retriever):
+#   06:00 — Morning walk (15 min) [priority: high]
+#     Reason: High-priority task scheduled to ensure completion; Scheduled in the morning to align with daily routine; Matches owner's preference for morning time
+#
+# ⏱️ Total planned: 15 min / 30 min available
+# ⏱️ Remaining: 15 min
 ## 🧪 Testing PawPal+
 
 ```bash
@@ -69,26 +75,33 @@ Sample test output:
 ```
 # Paste your pytest output here
 ```
+collected 36 items                                                                                                                          
 
+test_models.py ....................................                                                                    
+
+               [100%]
+
+============================================================ 36 passed in 0.09s ============================================================
 ## 📐 Smarter Scheduling
 
 > Fill in once you've implemented scheduling logic.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | | e.g., by priority, duration |  task is sorted by priority
+| Filtering | | e.g., skip tasks if time runs out | it will skip tasks that are over the time limit 
+| Conflict handling | | e.g., overlapping time slots | function is created in which it avoids overlapping time slots
+| Recurring tasks | | e.g., daily vs. weekly | two functions are created to handle recurring tasks by weekly or daily 
 
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. You first enter your name 
+2. You then enter your pet name and spieces
+3. save user information 
+4. Then you enter task related to the pet such as walking or feeding
+5. You then added priority to the task based on the level of priority of the task
+6. <!-- Add more steps as needed -->
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
