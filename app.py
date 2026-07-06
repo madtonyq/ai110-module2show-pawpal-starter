@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any
 import pandas as pd
 
@@ -14,121 +14,235 @@ st.set_page_config(
     layout="centered"
 )
 
-# Custom CSS for better styling
+# Custom CSS for better styling with darker, more comfortable colors
 st.markdown("""
     <style>
+    /* Main background - softer dark */
+    .stApp {
+        background-color: #1a1a2e;
+        color: #e0e0e0;
+    }
+    
+    /* Main header */
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
-        color: #2E86AB;
+        color: #4fc3f7;
         margin-bottom: 0.5rem;
     }
-    .plan-card {
-        background-color: #F0F8FF;
+    
+    /* All text elements */
+    .stApp, .stMarkdown, .stText, .stCaption, label {
+        color: #e0e0e0 !important;
+    }
+    
+    /* Headers */
+    h1, h2, h3, h4, h5, h6 {
+        color: #4fc3f7 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Expanders */
+    .streamlit-expanderHeader {
+        color: #e0e0e0 !important;
+        background-color: #1a1a3e !important;
+        border-radius: 5px !important;
+        font-weight: 600 !important;
+        border: 1px solid #2a2a4e !important;
+    }
+    .streamlit-expanderContent {
+        background-color: #16213e !important;
+        border-radius: 0 0 5px 5px !important;
+        border: 1px solid #2a2a4e !important;
+        border-top: none !important;
+    }
+    
+    /* Sidebar */
+    .css-1d391kg, .css-1l02zno {
+        background-color: #0f0f1f !important;
+    }
+    .css-1d391kg .stMarkdown, .css-1l02zno .stMarkdown {
+        color: #e0e0e0 !important;
+    }
+    
+    /* Plan output - exactly matching the requested format */
+    .plan-output {
+        font-family: 'Courier New', monospace;
+        background-color: #0f1f2f;
         padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 5px solid #2E86AB;
-        margin: 1rem 0;
+        border-radius: 8px;
+        border: 1px solid #2a3a5e;
+        color: #e0e0e0;
+        white-space: pre-wrap;
+        line-height: 1.8;
     }
-    .task-scheduled {
-        background-color: #E8F5E9;
-        padding: 0.75rem;
-        border-radius: 5px;
-        margin: 0.5rem 0;
-        border-left: 3px solid #4CAF50;
-    }
-    .task-excluded {
-        background-color: #FFEBEE;
-        padding: 0.75rem;
-        border-radius: 5px;
-        margin: 0.5rem 0;
-        border-left: 3px solid #F44336;
-    }
-    .priority-critical {
-        color: #D32F2F;
-        font-weight: bold;
-    }
-    .priority-high {
-        color: #E65100;
-        font-weight: bold;
-    }
-    .priority-medium {
-        color: #F57C00;
-    }
-    .priority-low {
-        color: #388E3C;
-    }
-    .reason-text {
-        font-size: 0.9rem;
-        color: #555;
+    .plan-output .comment {
+        color: #666;
         font-style: italic;
-        margin-top: 0.25rem;
-        padding-left: 1rem;
-        border-left: 2px solid #90CAF9;
     }
-    .stats-box {
-        background-color: #E3F2FD;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
+    .plan-output .header {
+        color: #4fc3f7;
+        font-weight: bold;
     }
-    .success-box {
-        background-color: #E8F5E9;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #4CAF50;
+    .plan-output .time {
+        color: #4fc3f7;
     }
-    .scenario-box {
-        background-color: #FFF3E0;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #FF9800;
-        margin: 1rem 0;
+    .plan-output .priority-high {
+        color: #ff9800;
     }
-    .build-box {
-        background-color: #E3F2FD;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #2196F3;
-        margin: 1rem 0;
+    .plan-output .priority-critical {
+        color: #ef5350;
     }
-    .demo-box {
-        background-color: #F3E5F5;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #9C27B0;
-        margin: 1rem 0;
+    .plan-output .priority-medium {
+        color: #ffd54f;
+    }
+    .plan-output .priority-low {
+        color: #81c784;
+    }
+    .plan-output .reason {
+        color: #90caf9;
+        font-style: italic;
+        padding-left: 2rem;
+    }
+    .plan-output .summary {
+        color: #81c784;
+        margin-top: 0.5rem;
+    }
+    .plan-output .excluded {
+        color: #ef9a9a;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        background-color: #1a3a5e !important;
+        color: #e0e0e0 !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        border: 1px solid #2a5a7e !important;
+        transition: all 0.3s ease !important;
+    }
+    .stButton > button:hover {
+        background-color: #2a5a7e !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 195, 247, 0.3) !important;
+    }
+    
+    /* Input fields */
+    .stTextInput > div > div > input {
+        background-color: #0f1f2f !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #2a3a5e !important;
+        border-radius: 4px !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #4fc3f7 !important;
+        box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2) !important;
+    }
+    
+    /* Select boxes */
+    .stSelectbox > div > div {
+        background-color: #0f1f2f !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #2a3a5e !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Number inputs */
+    .stNumberInput > div > div > input {
+        background-color: #0f1f2f !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #2a3a5e !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Alert boxes */
+    .stAlert {
+        color: #e0e0e0 !important;
+        border-radius: 6px !important;
+        background-color: #1a2a3a !important;
+        border: 1px solid #2a3a5e !important;
+    }
+    
+    /* DataFrames */
+    .dataframe {
+        color: #e0e0e0 !important;
+        background-color: #0f1f2f !important;
+        border-radius: 6px !important;
+        border: 1px solid #2a3a5e !important;
+    }
+    .dataframe th {
+        color: #4fc3f7 !important;
+        background-color: #1a2a4a !important;
+    }
+    .dataframe td {
+        color: #e0e0e0 !important;
+    }
+    
+    /* Metrics */
+    .stMetric {
+        background-color: #0f1f2f !important;
+        padding: 0.75rem !important;
+        border-radius: 8px !important;
+        border: 1px solid #2a3a5e !important;
+    }
+    .stMetric label {
+        color: #90caf9 !important;
+    }
+    .stMetric .stMetric-value {
+        color: #4fc3f7 !important;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #0f1f2f !important;
+        border-radius: 8px !important;
+        border: 1px solid #2a3a5e !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #90caf9 !important;
+        border-radius: 6px !important;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background-color: #1a3a5e !important;
+        color: #4fc3f7 !important;
+    }
+    
+    /* Multi-select */
+    .stMultiSelect > div > div {
+        background-color: #0f1f2f !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #2a3a5e !important;
+    }
+    
+    /* Checkboxes */
+    .stCheckbox > label {
+        color: #e0e0e0 !important;
+    }
+    
+    /* Dividers */
+    hr {
+        border-color: #2a3a5e !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # Initialize session state
-def init_session_state():
-    """Initialize all session state variables."""
-    if 'owner' not in st.session_state:
-        st.session_state.owner = None
-    if 'pet' not in st.session_state:
-        st.session_state.pet = None
-    if 'tasks' not in st.session_state:
-        st.session_state.tasks = []
-    if 'scheduler' not in st.session_state:
-        st.session_state.scheduler = None
-    if 'daily_plan' not in st.session_state:
-        st.session_state.daily_plan = None
-    if 'task_counter' not in st.session_state:
-        st.session_state.task_counter = 0
-    if 'editing_task_index' not in st.session_state:
-        st.session_state.editing_task_index = None
-    if 'owner_saved' not in st.session_state:
-        st.session_state.owner_saved = False
-    if 'pet_saved' not in st.session_state:
-        st.session_state.pet_saved = False
-    if 'show_welcome' not in st.session_state:
-        st.session_state.show_welcome = True
-    if 'demo_tasks' not in st.session_state:
-        st.session_state.demo_tasks = []
-
-init_session_state()
+if "tasks" not in st.session_state:
+    st.session_state.tasks = []
+if "owner" not in st.session_state:
+    st.session_state.owner = None
+if "pet" not in st.session_state:
+    st.session_state.pet = None
+if "scheduler" not in st.session_state:
+    st.session_state.scheduler = None
+if "daily_plan" not in st.session_state:
+    st.session_state.daily_plan = None
+if "owner_saved" not in st.session_state:
+    st.session_state.owner_saved = False
+if "pet_saved" not in st.session_state:
+    st.session_state.pet_saved = False
+if "show_welcome" not in st.session_state:
+    st.session_state.show_welcome = True
 
 # Helper functions
 def get_priority_value(priority_label: str) -> int:
@@ -151,15 +265,78 @@ def get_priority_label(priority_value: int) -> str:
     }
     return mapping.get(priority_value, 'medium')
 
-def get_priority_color(priority_value: int) -> str:
-    """Get CSS color class for priority."""
-    mapping = {
-        Priority.CRITICAL: 'priority-critical',
-        Priority.HIGH: 'priority-high',
-        Priority.MEDIUM: 'priority-medium',
-        Priority.LOW: 'priority-low'
-    }
-    return mapping.get(priority_value, '')
+def format_plan_output(plan) -> str:
+    """
+    Format the plan exactly like:
+    # Daily plan for Biscuit (Golden Retriever):
+    #   08:00 — Morning walk (30 min) [priority: high]
+    #   09:00 — Feeding (10 min) [priority: high]
+    """
+    lines = []
+    pet_name = plan.pet_name_
+    
+    # Get the pet object to access breed
+    pet = None
+    if st.session_state.pet:
+        pet = st.session_state.pet
+    
+    # Format: # Daily plan for Biscuit (Golden Retriever):
+    if pet and pet.get_breed():
+        lines.append(f"# Daily plan for {pet_name} ({pet.get_breed()}):")
+    else:
+        lines.append(f"# Daily plan for {pet_name}:")
+    
+    # Scheduled tasks with exact format: #   08:00 — Morning walk (30 min) [priority: high]
+    scheduled = plan.get_scheduled_tasks()
+    if scheduled:
+        for planned in sorted(scheduled, key=lambda p: p.get_start_time()):
+            task = planned.get_task()
+            time_str = planned.get_start_time_str()
+            description = task.get_description()
+            duration = task.get_duration()
+            priority = task.get_priority_label()
+            
+            # Exact format: #   08:00 — Morning walk (30 min) [priority: high]
+            lines.append(f"#   {time_str} — {description} ({duration} min) [priority: {priority}]")
+            
+            # Add reason as a comment line (optional)
+            if planned.get_reason():
+                lines.append(f"#     Reason: {planned.get_reason()}")
+    
+    # Add empty line between scheduled tasks and summary
+    lines.append("#")
+    
+    # Add summary
+    total_planned = plan.get_total_planned_minutes()
+    total_available = plan.get_total_available_minutes()
+    remaining = plan.get_remaining_minutes()
+    lines.append(f"# ⏱️ Total planned: {total_planned} min / {total_available} min available")
+    lines.append(f"# ⏱️ Remaining: {remaining} min")
+    
+    # Add excluded tasks if any
+    excluded = plan.get_excluded_tasks()
+    if excluded:
+        lines.append("#")
+        lines.append("# ❌ Skipped Tasks (could not fit):")
+        for task, reason in excluded:
+            lines.append(f"#   - {task.get_description()} ({task.get_duration()} min) [priority: {task.get_priority_label()}]")
+            lines.append(f"#     Reason: {reason}")
+    
+    return "\n".join(lines)
+
+def create_task_from_dict(task_dict: Dict) -> Task:
+    """Create a Task object from a dictionary."""
+    priority_value = get_priority_value(task_dict.get('priority', 'medium'))
+    return Task(
+        description=task_dict.get('title', ''),
+        duration_minutes=task_dict.get('duration_minutes', 30),
+        priority=priority_value,
+        category=task_dict.get('category', 'other'),
+        preferred_time=task_dict.get('preferred_time', None),
+        is_recurring=task_dict.get('is_recurring', False),
+        recurring_pattern=task_dict.get('recurring_pattern', None),
+        recurring_days=task_dict.get('recurring_days', [])
+    )
 
 def create_task_from_form(description: str, duration: int, priority_label: str, 
                           category: str, preferred_time: str = None,
@@ -168,12 +345,8 @@ def create_task_from_form(description: str, duration: int, priority_label: str,
                           recurring_days: List[str] = None) -> Task:
     """Create a Task object from form inputs."""
     priority = get_priority_value(priority_label)
-    
-    # Convert preferred time
     if preferred_time == 'None' or not preferred_time:
         preferred_time = None
-    
-    # Handle recurrence
     if is_recurring and recurring_pattern == 'weekly' and recurring_days:
         if isinstance(recurring_days, str):
             recurring_days = [day.strip() for day in recurring_days.split(',') if day.strip()]
@@ -181,7 +354,6 @@ def create_task_from_form(description: str, duration: int, priority_label: str,
             recurring_days = []
     else:
         recurring_days = None
-    
     return Task(
         description=description,
         duration_minutes=duration,
@@ -193,123 +365,34 @@ def create_task_from_form(description: str, duration: int, priority_label: str,
         recurring_days=recurring_days if is_recurring and recurring_pattern == 'weekly' else None
     )
 
-def format_plan_for_display(plan) -> str:
-    """Format the plan as a readable string."""
-    lines = plan.get_formatted_plan()
-    return "\n".join(lines)
-
 # Main UI
 st.markdown('<p class="main-header">🐾 PawPal+</p>', unsafe_allow_html=True)
 st.caption("Your Pet Care Planning Assistant")
 
-# Welcome/Intro section with Scenario and What you need to build
+# Welcome section with Scenario and What you need to build
 if st.session_state.show_welcome:
-    with st.expander("📖 Scenario", expanded=True):
-        st.markdown("""
-        <div class="scenario-box">
-        <h4>🐾 The Problem</h4>
-        <p>
-        A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
-        </p>
-        <ul>
-            <li>📝 Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)</li>
-            <li>⏰ Consider constraints (time available, priority, owner preferences)</li>
-            <li>📅 Produce a daily plan and <strong>explain why it chose that plan</strong></li>
-        </ul>
-        <p>
-        <strong>PawPal+</strong> is a pet care planning assistant that helps pet owners plan care tasks
-        for their pet(s) based on constraints like time, priority, and preferences.
-        </p>
-        </div>
-        """, unsafe_allow_html=True)
+    with st.expander("Scenario", expanded=True):
+        st.markdown(
+            """
+**PawPal+** is a pet care planning assistant. It helps a pet owner plan care tasks
+for their pet(s) based on constraints like time, priority, and preferences.
+
+You will design and implement the scheduling logic and connect it to this Streamlit UI.
+"""
+        )
+
+    with st.expander("What you need to build", expanded=True):
+        st.markdown(
+            """
+At minimum, your system should:
+- Represent pet care tasks (what needs to happen, how long it takes, priority)
+- Represent the pet and the owner (basic info and preferences)
+- Build a plan/schedule for a day that chooses and orders tasks based on constraints
+- Explain the plan (why each task was chosen and when it happens)
+"""
+        )
     
-    with st.expander("🎯 What You Need to Build", expanded=True):
-        st.markdown("""
-        <div class="build-box">
-        <h4>🔧 System Requirements</h4>
-        <p>At minimum, your system should:</p>
-        <ul>
-            <li>✅ <strong>Represent pet care tasks</strong> - what needs to happen, how long it takes, priority</li>
-            <li>✅ <strong>Represent the pet and the owner</strong> - basic info and preferences</li>
-            <li>✅ <strong>Build a plan/schedule for a day</strong> - chooses and orders tasks based on constraints</li>
-            <li>✅ <strong>Explain the plan</strong> - why each task was chosen and when it happens</li>
-        </ul>
-        <p>
-        <strong>Ready to get started?</strong> Use the sidebar to enter your info, add tasks, and generate your first schedule!
-        </p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Quick Demo Section (from original starter app)
-    with st.expander("🚀 Quick Demo Inputs", expanded=True):
-        st.markdown("""
-        <div class="demo-box">
-        <h4>⚡ Quick Start Demo</h4>
-        <p>Try out PawPal+ with some sample inputs before setting up everything!</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            demo_owner = st.text_input("Owner name", value="Jordan", key="demo_owner")
-            demo_pet = st.text_input("Pet name", value="Mochi", key="demo_pet")
-            demo_species = st.selectbox("Species", ["dog", "cat", "other"], key="demo_species")
-        
-        with col2:
-            st.markdown("### Add a Task")
-            demo_task_title = st.text_input("Task title", value="Morning walk", key="demo_task_title")
-            demo_duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20, key="demo_duration")
-            demo_priority = st.selectbox("Priority", ["low", "medium", "high","critical"], index=2, key="demo_priority")
-            
-            if st.button("➕ Add Demo Task", key="add_demo_task"):
-                st.session_state.demo_tasks.append({
-                    "title": demo_task_title,
-                    "duration_minutes": int(demo_duration),
-                    "priority": demo_priority
-                })
-                st.success(f"✅ Added: {demo_task_title}")
-                st.rerun()
-        
-        if st.session_state.demo_tasks:
-            st.write("Demo Tasks:")
-            st.table(st.session_state.demo_tasks)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("📋 Copy to Main Tasks", key="copy_demo_tasks"):
-                    for demo_task in st.session_state.demo_tasks:
-                        # Convert demo task to real Task object
-                        task = create_task_from_form(
-                            description=demo_task["title"],
-                            duration=demo_task["duration_minutes"],
-                            priority_label=demo_task["priority"],
-                            category="other",
-                            preferred_time=None,
-                            is_recurring=False
-                        )
-                        st.session_state.tasks.append(task)
-                    
-                    # Update scheduler
-                    if st.session_state.owner and st.session_state.pet:
-                        st.session_state.scheduler = Scheduler(
-                            st.session_state.owner,
-                            st.session_state.pet,
-                            st.session_state.tasks
-                        )
-                    
-                    st.success(f"✅ Copied {len(st.session_state.demo_tasks)} tasks to main tasks!")
-                    st.session_state.demo_tasks = []
-                    st.rerun()
-            
-            with col2:
-                if st.button("🗑️ Clear Demo Tasks", key="clear_demo_tasks"):
-                    st.session_state.demo_tasks = []
-                    st.rerun()
-        else:
-            st.info("No demo tasks yet. Add one above!")
-    
-    # Dismiss button
-    if st.button("🚀 Get Started with Full App!", use_container_width=True):
+    if st.button("🚀 Get Started", use_container_width=True):
         st.session_state.show_welcome = False
         st.rerun()
     
@@ -319,432 +402,235 @@ if st.session_state.show_welcome:
 with st.sidebar:
     st.header("📋 Owner & Pet Info")
     
-    with st.expander("👤 Owner Details", expanded=not st.session_state.owner_saved):
-        owner_name = st.text_input("Owner Name", value=st.session_state.owner.get_name() if st.session_state.owner else "Jordan", key="owner_name_input")
+    with st.expander("Owner Details", expanded=not st.session_state.owner_saved):
+        owner_name = st.text_input("Owner name", value="Jordan", key="owner_name")
         daily_time_limit = st.number_input(
-            "⏱️ Daily Time Limit (minutes)", 
+            "Daily Time Limit (minutes)", 
             min_value=30, 
             max_value=720, 
-            value=st.session_state.owner.get_time_limit() if st.session_state.owner else 120,
+            value=120,
             step=15,
-            key="time_limit_input",
-            help="Maximum minutes per day you can dedicate to pet care"
+            key="time_limit",
+            help="Maximum minutes per day for pet care"
         )
         
         owner_preferences = st.multiselect(
-            "🎯 Owner Preferences",
-            options=['morning_person', 'evening_person', 'prefer_walks', 'prefer_indoor', 'busy_mornings', 'busy_afternoons'],
-            default=st.session_state.owner.get_all_preferences().keys() if st.session_state.owner else ['morning_person'],
+            "Owner Preferences",
+            options=['morning_person', 'evening_person', 'prefer_walks', 'prefer_indoor'],
+            default=['morning_person'],
             key="owner_prefs"
         )
     
-    with st.expander("🐕 Pet Details", expanded=not st.session_state.pet_saved):
-        pet_name = st.text_input("Pet Name", value=st.session_state.pet.get_name() if st.session_state.pet else "Mochi", key="pet_name_input")
-        species = st.selectbox("Species", ["Dog", "Cat", "Bird", "Rabbit", "Other"], 
-                              index=0 if not st.session_state.pet else ["Dog", "Cat", "Bird", "Rabbit", "Other"].index(st.session_state.pet.get_species()) if st.session_state.pet.get_species() in ["Dog", "Cat", "Bird", "Rabbit", "Other"] else 0,
-                              key="species_input")
-        breed = st.text_input("Breed (optional)", value=st.session_state.pet.get_breed() if st.session_state.pet else "", key="breed_input")
-        pet_age = st.number_input("Age (years)", min_value=0, max_value=30, 
-                                 value=st.session_state.pet.get_age() if st.session_state.pet else 2, 
-                                 key="age_input")
-        pet_weight = st.number_input("Weight (kg)", min_value=0.0, max_value=100.0, 
-                                    value=st.session_state.pet.get_weight() if st.session_state.pet else 0.0,
-                                    step=0.5,
-                                    key="weight_input")
+    with st.expander("Pet Details", expanded=not st.session_state.pet_saved):
+        pet_name = st.text_input("Pet name", value="Mochi", key="pet_name")
+        species = st.selectbox(
+            "Species", 
+            ["Dog", "Cat", "Bird", "Rabbit", "Hamster", "Guinea Pig", "Fish", "Reptile", "Horse", "Other"],
+            key="species"
+        )
+        breed = st.text_input("Breed (optional)", value="Golden Retriever", key="breed")
+        pet_age = st.number_input("Age (years)", min_value=0, max_value=30, value=2, key="age")
         
         medical_conditions = st.multiselect(
-            "🏥 Medical Conditions",
-            options=['diabetic', 'allergies', 'arthritis', 'heart_condition', 'blind', 'deaf', 'senior', 'puppy'],
-            default=st.session_state.pet.get_medical_conditions() if st.session_state.pet else [],
+            "Medical Conditions",
+            options=['diabetic', 'allergies', 'arthritis', 'heart_condition', 'blind', 'deaf'],
+            default=[],
             key="medical_conditions"
         )
     
-    # Save pet and owner info button
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("💾 Save Info", key="save_info", use_container_width=True):
-            # Create or update owner
-            if st.session_state.owner is None:
-                st.session_state.owner = Owner(owner_name, daily_time_limit)
-            else:
-                # Update existing owner
-                st.session_state.owner = Owner(owner_name, daily_time_limit)
-            
+        if st.button("💾 Save Info", use_container_width=True):
+            st.session_state.owner = Owner(owner_name, daily_time_limit)
             for pref in owner_preferences:
                 st.session_state.owner.set_preference(pref, True)
             st.session_state.owner_saved = True
             
-            # Create or update pet
             st.session_state.pet = Pet(
                 name=pet_name,
                 species=species,
                 breed=breed,
                 age=pet_age,
-                weight=pet_weight,
                 medical_conditions=medical_conditions
             )
             st.session_state.pet_saved = True
             
-            # Update scheduler if tasks exist
             if st.session_state.tasks:
                 st.session_state.scheduler = Scheduler(
                     st.session_state.owner,
                     st.session_state.pet,
-                    st.session_state.tasks
+                    [create_task_from_dict(t) for t in st.session_state.tasks]
                 )
             
             st.success(f"✅ Saved! {owner_name} & {pet_name}")
             st.balloons()
     
     with col2:
-        if st.button("🔄 Reset", key="reset_info", use_container_width=True):
+        if st.button("🔄 Reset", use_container_width=True):
             st.session_state.owner = None
             st.session_state.pet = None
             st.session_state.owner_saved = False
             st.session_state.pet_saved = False
             st.session_state.daily_plan = None
+            st.session_state.tasks = []
             st.rerun()
     
-    # Show current status
     if st.session_state.owner_saved and st.session_state.pet_saved:
         st.success(f"✅ {st.session_state.owner.get_name()} & {st.session_state.pet.get_name()}")
 
-# Main content area
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Tasks", "📅 Schedule", "📊 Statistics", "ℹ️ About"])
+st.divider()
 
-# Tab 1: Task Management
-with tab1:
-    st.header("📝 Manage Tasks")
-    
-    # Check if owner and pet info is saved
-    if not st.session_state.owner_saved or not st.session_state.pet_saved:
-        st.warning("⚠️ Please save owner and pet info in the sidebar first!")
-    
-    # Add/Edit Task
-    st.subheader("Add New Task" if st.session_state.editing_task_index is None else "✏️ Edit Task")
-    
-    with st.form(key="task_form"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            task_description = st.text_input(
-                "Task Description *", 
-                value="",
-                key="task_desc"
-            )
-            task_duration = st.number_input(
-                "⏱️ Duration (minutes) *", 
-                min_value=1, 
-                max_value=240, 
-                value=30,
-                key="task_duration"
-            )
-            task_priority = st.selectbox(
-                "⭐ Priority *", 
-                ["low", "medium", "high", "critical"],
-                index=2,
-                key="task_priority"
-            )
-        
-        with col2:
-            task_category = st.selectbox(
-                "📂 Category",
-                ["walk", "feed", "med", "enrichment", "groom", "vet", "training", "other"],
-                index=0,
-                key="task_category"
-            )
-            preferred_time = st.selectbox(
-                "🕐 Preferred Time",
-                ["None", "morning", "afternoon", "evening"],
-                index=0,
-                key="task_preferred_time"
-            )
-            
-            is_recurring = st.checkbox("🔄 Recurring Task", key="task_recurring")
-            
-            if is_recurring:
-                recurring_pattern = st.selectbox(
-                    "Recurring Pattern",
-                    ["daily", "weekly"],
-                    key="task_recurring_pattern"
-                )
-                
-                if recurring_pattern == "weekly":
-                    recurring_days = st.multiselect(
-                        "Days of Week",
-                        ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-                        default=["Monday", "Wednesday", "Friday"],
-                        key="task_recurring_days"
-                    )
-                else:
-                    recurring_days = []
-            else:
-                recurring_pattern = "daily"
-                recurring_days = []
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            submit_button = st.form_submit_button(
-                "💾 Save Task" if st.session_state.editing_task_index is None else "✏️ Update Task",
-                use_container_width=True
-            )
-        with col2:
-            if st.session_state.editing_task_index is not None:
-                if st.form_submit_button("❌ Cancel Edit", use_container_width=True):
-                    st.session_state.editing_task_index = None
-                    st.rerun()
-        
-        if submit_button:
-            if not task_description:
-                st.error("Please enter a task description")
-            else:
-                try:
-                    # Create task
-                    task = create_task_from_form(
-                        description=task_description,
-                        duration=task_duration,
-                        priority_label=task_priority,
-                        category=task_category,
-                        preferred_time=preferred_time if preferred_time != "None" else None,
-                        is_recurring=is_recurring,
-                        recurring_pattern=recurring_pattern,
-                        recurring_days=recurring_days
-                    )
-                    
-                    # Add or update task
-                    if st.session_state.editing_task_index is not None:
-                        st.session_state.tasks[st.session_state.editing_task_index] = task
-                        st.session_state.editing_task_index = None
-                        st.success("✅ Task updated!")
-                    else:
-                        st.session_state.tasks.append(task)
-                        st.success("✅ Task added!")
-                    
-                    # Update scheduler
-                    if st.session_state.owner and st.session_state.pet:
-                        st.session_state.scheduler = Scheduler(
-                            st.session_state.owner,
-                            st.session_state.pet,
-                            st.session_state.tasks
-                        )
-                    
-                    st.rerun()
-                    
-                except Exception as e:
-                    st.error(f"Error creating task: {str(e)}")
-    
-    # Task List
-    st.subheader("📋 Your Tasks")
-    
-    if not st.session_state.tasks:
-        st.info("No tasks yet. Add your first pet care task above!")
-    else:
-        # Display tasks in a nice format
-        for idx, task in enumerate(st.session_state.tasks):
-            priority_label = task.get_priority_label()
-            color_class = get_priority_color(task.get_priority())
-            
-            with st.container():
-                col1, col2, col3, col4, col5, col6 = st.columns([3, 1.5, 1.5, 1.5, 0.8, 0.8])
-                
-                with col1:
-                    st.write(f"**{task.get_description()}**")
-                with col2:
-                    st.write(f"{task.get_duration()} min")
-                with col3:
-                    st.markdown(f'<span class="{color_class}">{priority_label.capitalize()}</span>', unsafe_allow_html=True)
-                with col4:
-                    st.write(task.get_category())
-                with col5:
-                    if task.get_is_recurring():
-                        pattern = task.get_recurring_pattern()
-                        if pattern == 'daily':
-                            st.write("📅 Daily")
-                        else:
-                            st.write("📅 Weekly")
-                    else:
-                        st.write("❌")
-                with col6:
-                    if st.button("🗑️", key=f"delete_{idx}"):
-                        st.session_state.tasks.pop(idx)
-                        if st.session_state.scheduler and st.session_state.owner and st.session_state.pet:
-                            st.session_state.scheduler = Scheduler(
-                                st.session_state.owner,
-                                st.session_state.pet,
-                                st.session_state.tasks
-                            )
-                        st.rerun()
-                
-                # Show recurrence details
-                if task.get_is_recurring() and task.get_recurring_pattern() == 'weekly':
-                    days = task.get_recurring_days()
-                    st.caption(f"📅 Repeats on: {', '.join(days)}")
-                
-                st.divider()
-        
-        st.caption(f"Total: {len(st.session_state.tasks)} tasks")
+# Quick Demo Inputs section
+st.subheader("Quick Demo Inputs")
+owner_name = st.text_input("Owner name", value="Jordan", key="demo_owner")
+pet_name = st.text_input("Pet name", value="Biscuit", key="demo_pet")
+species = st.selectbox(
+    "Species", 
+    ["dog", "cat", "bird", "rabbit", "hamster", "guinea pig", "fish", "reptile", "horse", "other"],
+    key="demo_species"
+)
+breed = st.text_input("Breed (optional)", value="Golden Retriever", key="demo_breed")
 
-# Tab 2: Schedule Generation
-with tab2:
-    st.header("📅 Generate Daily Schedule")
-    
-    # Check if we have everything needed
-    if not st.session_state.owner_saved or not st.session_state.pet_saved:
-        st.warning("⚠️ Please save owner and pet info in the sidebar first!")
-    elif not st.session_state.tasks:
-        st.warning("⚠️ Please add at least one task in the Tasks tab!")
-    else:
-        # Schedule generation options
-        col1, col2 = st.columns(2)
-        with col1:
-            schedule_date = st.date_input(
-                "📅 Select Date",
-                value=datetime.now(),
-                key="schedule_date"
-            )
-        
-        with col2:
-            if st.session_state.scheduler is None:
-                st.session_state.scheduler = Scheduler(
-                    st.session_state.owner,
-                    st.session_state.pet,
-                    st.session_state.tasks
-                )
-            
-            time_limit = st.number_input(
-                "⏱️ Daily Time Limit (minutes)",
-                min_value=30,
-                max_value=720,
-                value=st.session_state.owner.get_time_limit(),
-                step=15,
-                key="schedule_time_limit"
-            )
-            # Update owner time limit if changed
-            if time_limit != st.session_state.owner.get_time_limit():
-                st.session_state.owner.set_time_limit(time_limit)
-        
-        # Generate schedule button
-        if st.button("🚀 Generate Schedule", use_container_width=True, key="generate_schedule"):
-            with st.spinner("🧠 Generating schedule..."):
-                try:
-                    date_str = schedule_date.strftime('%Y-%m-%d')
-                    
-                    # Update scheduler with latest tasks
-                    st.session_state.scheduler = Scheduler(
-                        st.session_state.owner,
-                        st.session_state.pet,
-                        st.session_state.tasks
-                    )
-                    
-                    # Generate plan
-                    st.session_state.daily_plan = st.session_state.scheduler.generate_daily_plan(date_str)
-                    
-                    st.success("✅ Schedule generated successfully!")
-                    st.balloons()
-                    
-                except Exception as e:
-                    st.error(f"Error generating schedule: {str(e)}")
-        
-        # Display plan if it exists
-        if st.session_state.daily_plan:
-            plan = st.session_state.daily_plan
-            
-            # Summary
-            st.markdown("### 📋 Schedule Summary")
-            summary = plan.get_summary()
-            st.info(summary)
-            
-            # Stats
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("📋 Scheduled Tasks", len(plan.get_scheduled_tasks()))
-            with col2:
-                st.metric("❌ Excluded Tasks", len(plan.get_excluded_tasks()))
-            with col3:
-                st.metric("⏱️ Time Used", f"{plan.get_total_planned_minutes()} min")
-            with col4:
-                remaining = plan.get_remaining_minutes()
-                st.metric("⏱️ Time Remaining", f"{remaining} min")
-            
-            # Scheduled tasks
-            st.markdown("### ✅ Scheduled Tasks")
-            scheduled = plan.get_scheduled_tasks()
-            if scheduled:
-                for planned in sorted(scheduled, key=lambda p: p.get_start_time()):
-                    task = planned.get_task()
-                    priority_label = task.get_priority_label()
-                    color_class = get_priority_color(task.get_priority())
-                    
-                    with st.container():
-                        st.markdown(f"""
-                        <div class="task-scheduled">
-                            <strong>🕐 {planned.get_start_time_str()} – {task.get_description()}</strong>
-                            <span style="float: right;">({task.get_duration()} min)</span>
-                            <br>
-                            <span class="{color_class}">Priority: {priority_label}</span>
-                            <span style="margin-left: 1rem;">Category: {task.get_category()}</span>
-                            <div class="reason-text">
-                                💡 {planned.get_reason()}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-            else:
-                st.info("No tasks scheduled for this day.")
-            
-            # Excluded tasks
-            st.markdown("### ❌ Excluded Tasks")
-            excluded = plan.get_excluded_tasks()
-            if excluded:
-                for task, reason in excluded:
-                    with st.container():
-                        st.markdown(f"""
-                        <div class="task-excluded">
-                            <strong>{task.get_description()}</strong>
-                            <span style="float: right;">({task.get_duration()} min)</span>
-                            <br>
-                            Priority: {task.get_priority_label()}
-                            <div class="reason-text">
-                                ℹ️ {reason}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-            else:
-                st.success("🎉 All tasks were successfully scheduled!")
-            
-            # Download plan as text
-            if st.button("📥 Download Plan as Text", key="download_plan"):
-                plan_text = format_plan_for_display(plan)
-                st.download_button(
-                    label="📄 Download Plan",
-                    data=plan_text,
-                    file_name=f"pawpal_plan_{schedule_date.strftime('%Y-%m-%d')}.txt",
-                    mime="text/plain"
-                )
+st.markdown("### Tasks")
+st.caption("Add a few tasks. These will feed into your scheduler.")
 
-# Tab 3: Statistics
-with tab3:
-    st.header("📊 Schedule Statistics")
-    
-    if st.session_state.daily_plan is None:
-        st.info("Generate a schedule first to see statistics!")
+priority_options = ["low", "medium", "high", "critical"]
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    task_title = st.text_input("Task title", value="Morning walk", key="task_title")
+with col2:
+    duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=30, key="duration")
+with col3:
+    priority = st.selectbox("Priority", priority_options, index=2, key="priority")
+
+# Advanced options for tasks
+with st.expander("Advanced Task Options"):
+    category = st.selectbox("Category", ["walk", "feed", "med", "enrichment", "groom", "vet", "training", "other"], index=0)
+    preferred_time = st.selectbox("Preferred Time", ["None", "morning", "afternoon", "evening"], index=0)
+    is_recurring = st.checkbox("Recurring Task")
+    if is_recurring:
+        recurring_pattern = st.selectbox("Recurring Pattern", ["daily", "weekly"])
+        if recurring_pattern == "weekly":
+            recurring_days = st.multiselect(
+                "Days of Week",
+                ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+                default=["Monday", "Wednesday", "Friday"]
+            )
+        else:
+            recurring_days = []
     else:
-        plan = st.session_state.daily_plan
-        
-        # Overall stats
-        col1, col2, col3 = st.columns(3)
+        recurring_pattern = "daily"
+        recurring_days = []
+
+if st.button("Add task", key="add_task"):
+    task_dict = {
+        "title": task_title,
+        "duration_minutes": int(duration),
+        "priority": priority,
+        "category": category if st.session_state.get('category') else "other",
+        "preferred_time": preferred_time if preferred_time != "None" else None,
+        "is_recurring": is_recurring if st.session_state.get('is_recurring') else False,
+        "recurring_pattern": recurring_pattern if is_recurring else None,
+        "recurring_days": recurring_days if is_recurring and recurring_pattern == "weekly" else []
+    }
+    st.session_state.tasks.append(task_dict)
+    st.success(f"✅ Added: {task_title}")
+    st.rerun()
+
+if st.session_state.tasks:
+    st.write("Current tasks:")
+    task_df = pd.DataFrame(st.session_state.tasks)
+    st.dataframe(task_df, use_container_width=True)
+else:
+    st.info("No tasks yet. Add one above.")
+
+st.divider()
+
+st.subheader("Build Schedule")
+st.caption("Generate a daily schedule based on your tasks, priorities, and constraints.")
+
+# Check if we have everything needed
+if not st.session_state.owner_saved or not st.session_state.pet_saved:
+    st.warning("⚠️ Please save owner and pet info in the sidebar first!")
+elif not st.session_state.tasks:
+    st.warning("⚠️ Please add at least one task above!")
+else:
+    # Convert dict tasks to Task objects
+    task_objects = [create_task_from_dict(t) for t in st.session_state.tasks]
+    
+    # Update scheduler
+    if st.session_state.scheduler is None:
+        st.session_state.scheduler = Scheduler(
+            st.session_state.owner,
+            st.session_state.pet,
+            task_objects
+        )
+    
+    # Schedule options
+    col1, col2 = st.columns(2)
+    with col1:
+        schedule_date = st.date_input("Select Date", value=datetime.now(), key="schedule_date")
+    
+    with col2:
+        # Update scheduler with latest tasks
+        st.session_state.scheduler = Scheduler(
+            st.session_state.owner,
+            st.session_state.pet,
+            task_objects
+        )
+    
+    if st.button("Generate schedule", key="generate_schedule"):
+        with st.spinner("Generating schedule..."):
+            try:
+                date_str = schedule_date.strftime('%Y-%m-%d')
+                st.session_state.daily_plan = st.session_state.scheduler.generate_daily_plan(date_str)
+                st.success("✅ Schedule generated successfully!")
+                st.balloons()
+            except Exception as e:
+                st.error(f"Error generating schedule: {str(e)}")
+
+# Display plan if it exists with the requested format
+if st.session_state.daily_plan:
+    plan = st.session_state.daily_plan
+    
+    st.divider()
+    st.subheader("📋 Your Daily Plan")
+    
+    # Generate formatted plan output
+    plan_text = format_plan_output(plan)
+    
+    # Display in a styled container
+    st.markdown(f"""
+    <div class="plan-output">
+    {plan_text}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Download button for the plan
+    if st.button("📥 Download Plan as Text"):
+        st.download_button(
+            label="📄 Download",
+            data=plan_text,
+            file_name=f"pawpal_plan_{schedule_date.strftime('%Y-%m-%d')}.txt",
+            mime="text/plain"
+        )
+    
+    # Statistics section
+    with st.expander("📊 View Statistics"):
+        # Stats
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            utilization = (plan.get_total_planned_minutes() / plan.get_total_available_minutes() * 100)
-            st.metric("📈 Utilization Rate", f"{utilization:.1f}%")
+            st.metric("Scheduled Tasks", len(plan.get_scheduled_tasks()))
         with col2:
-            total_tasks = len(plan.get_scheduled_tasks()) + len(plan.get_excluded_tasks())
-            success_rate = len(plan.get_scheduled_tasks()) / total_tasks * 100 if total_tasks > 0 else 0
-            st.metric("🎯 Success Rate", f"{success_rate:.1f}%")
+            st.metric("Excluded Tasks", len(plan.get_excluded_tasks()))
         with col3:
-            avg_duration = plan.get_total_planned_minutes() / len(plan.get_scheduled_tasks()) if plan.get_scheduled_tasks() else 0
-            st.metric("⏱️ Avg Task Duration", f"{avg_duration:.0f} min")
+            st.metric("Time Used", f"{plan.get_total_planned_minutes()} min")
+        with col4:
+            remaining = plan.get_remaining_minutes()
+            st.metric("Time Remaining", f"{remaining} min")
         
         # Category breakdown
-        st.markdown("### 📊 Task Categories")
         categories = {}
         for planned in plan.get_scheduled_tasks():
             task = planned.get_task()
@@ -764,15 +650,10 @@ with tab3:
                     'Avg Minutes': data['total_minutes'] / data['count']
                 })
             df_cat = pd.DataFrame(cat_data)
-            st.table(df_cat)
-            
-            # Bar chart
+            st.dataframe(df_cat, use_container_width=True)
             st.bar_chart(df_cat.set_index('Category')['Count'])
-        else:
-            st.info("No scheduled tasks to analyze")
         
-        # Priority breakdown
-        st.markdown("### 🎯 Priority Distribution")
+        # Priority distribution
         priorities = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
         for planned in plan.get_scheduled_tasks():
             task = planned.get_task()
@@ -785,106 +666,13 @@ with tab3:
                 'Count': list(priorities.values())
             })
             st.bar_chart(priority_df.set_index('Priority'))
-        
-        # Time of day distribution
-        st.markdown("### 🌅 Time Distribution")
-        time_slots = {'Morning (6-12)': 0, 'Afternoon (12-17)': 0, 'Evening (17-22)': 0}
-        for planned in plan.get_scheduled_tasks():
-            start = planned.get_start_time()
-            hour = start // 60
-            if 6 <= hour < 12:
-                time_slots['Morning (6-12)'] += 1
-            elif 12 <= hour < 17:
-                time_slots['Afternoon (12-17)'] += 1
-            else:
-                time_slots['Evening (17-22)'] += 1
-        
-        if any(time_slots.values()):
-            time_df = pd.DataFrame({
-                'Time Slot': list(time_slots.keys()),
-                'Tasks': list(time_slots.values())
-            })
-            st.bar_chart(time_df.set_index('Time Slot'))
-        
-        # Schedule efficiency
-        st.markdown("### 📈 Schedule Efficiency")
-        col1, col2 = st.columns(2)
-        with col1:
-            scheduled_minutes = plan.get_total_planned_minutes()
-            available_minutes = plan.get_total_available_minutes()
-            st.metric(
-                "⏱️ Time Used vs Available",
-                f"{scheduled_minutes} / {available_minutes} min",
-                delta=f"{available_minutes - scheduled_minutes} min remaining"
-            )
-        with col2:
-            task_count = len(plan.get_scheduled_tasks())
-            excluded_count = len(plan.get_excluded_tasks())
-            st.metric(
-                "📋 Tasks Scheduled vs Excluded",
-                f"{task_count} / {excluded_count}",
-                delta=f"{excluded_count} excluded"
-            )
-
-# Tab 4: About
-with tab4:
-    st.header("ℹ️ About PawPal+")
-    
-    st.markdown("""
-    ### 🐾 PawPal+ - Smart Pet Care Planning
-    
-    PawPal+ helps busy pet owners stay consistent with pet care by:
-    
-    1. **📝 Tracking Tasks**: Keep track of all your pet care tasks
-    2. **🧠 Smart Scheduling**: Automatically schedules tasks based on priorities and constraints
-    3. **💡 Explains Decisions**: Each task comes with a reason for its scheduling
-    4. **🔄 Adaptable**: Handles recurring tasks, preferences, and special needs
-    
-    ### How It Works
-    
-    **Scheduling Logic:**
-    - Tasks are sorted by priority (Critical > High > Medium > Low)
-    - Within same priority, shorter tasks are scheduled first
-    - Tasks are placed in the earliest available time slots
-    - If a task doesn't fit, it's excluded with an explanation
-    
-    **Constraints Considered:**
-    - ⏱️ Daily time limit
-    - 🕐 Working hours (6:00 AM - 10:00 PM)
-    - ⭐ Task priorities
-    - 👤 Owner preferences
-    - 🏥 Pet medical conditions
-    - 🔄 Task recurrence
-    
-    ### Technologies Used
-    - **Streamlit**: Interactive web interface
-    - **Python**: Core logic and scheduling
-    - **Pytest**: Unit testing
-    - **Pandas**: Data manipulation
-    
-    ### Getting Started
-    1. 👤 Enter owner and pet info in the sidebar
-    2. 📝 Add your pet care tasks in the Tasks tab
-    3. 📅 Generate a schedule in the Schedule tab
-    4. 📊 View statistics and insights in the Statistics tab
-    
-    ### Future Improvements
-    - Multiple pet support
-    - Calendar integration
-    - Mobile notifications
-    - AI-powered scheduling optimization
-    - Social features (share with family)
-    
-    ---
-    *Built as a Module 2 Project* 🎓
-    """)
 
 # Footer
 st.divider()
 st.caption("🐾 PawPal+ - Your Pet Care Planning Assistant | Made with ❤️")
 
-# Debug information (hidden by default)
-with st.expander("🔧 Debug Info (for developers)"):
+# Debug info
+with st.expander("🔧 Debug Info"):
     st.json({
         "owner": str(st.session_state.owner) if st.session_state.owner else None,
         "pet": str(st.session_state.pet) if st.session_state.pet else None,
@@ -892,8 +680,5 @@ with st.expander("🔧 Debug Info (for developers)"):
         "scheduler": str(st.session_state.scheduler) if st.session_state.scheduler else None,
         "plan_exists": st.session_state.daily_plan is not None,
         "owner_saved": st.session_state.owner_saved,
-        "pet_saved": st.session_state.pet_saved,
-        "editing_task": st.session_state.editing_task_index,
-        "show_welcome": st.session_state.show_welcome,
-        "demo_tasks_count": len(st.session_state.demo_tasks)
+        "pet_saved": st.session_state.pet_saved
     })
